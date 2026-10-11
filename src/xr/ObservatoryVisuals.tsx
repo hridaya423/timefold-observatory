@@ -1,11 +1,21 @@
-import { ViroBox, ViroMaterials, ViroNode, ViroSphere } from '@reactvision/react-viro';
+import { ViroAnimations, ViroBox, ViroMaterials, ViroNode, ViroSphere } from '@reactvision/react-viro';
 import type { EraVisual } from '../../shared/presentation';
 import SceneLabel from './SceneLabel';
 import type { PuzzleField } from '../../shared/puzzle';
 
-type Interaction = { selected: PuzzleField | null; highlights: readonly PuzzleField[]; onSelect: (field: PuzzleField) => void };
+type Interaction = { selected: PuzzleField | null; highlights: readonly PuzzleField[]; onSelect: (field: PuzzleField) => void; onPlace: (index: number) => void };
 
 type Point = [number, number, number];
+
+const choiceTargets: Readonly<Record<PuzzleField, readonly (Point | null)[]>> = {
+  cell: [[-0.28, 0.07, 0.39], [-0.23, 0.09, 0.26], [-0.23, 0.09, 0.06]],
+  fuse: [[-0.16, 0.05, 0.39], [-0.14, 0.07, 0.26], [-0.14, 0.07, 0.06]],
+  gear: [[0.26, 0.05, 0.36], [0.24, 0.17, 0.07], null],
+  lens: [[0.13, 0.04, 0.39], [0.025, 0.52, -0.17], null],
+  alignment: [[-0.13, 0.36, 0.12], [0.025, 0.4, 0.12], [0.18, 0.36, 0.12]],
+  crystal: [[0.27, 0.04, 0.39], [0.22, 0.12, 0.28], null],
+  frequency: [[0.16, 0.068, 0.35], [0.22, 0.068, 0.35], [0.28, 0.068, 0.35]],
+};
 ViroMaterials.createMaterials({
   tfFloor: { diffuseColor: '#202b29' },
   tfPast: { diffuseColor: '#a38f69' },
@@ -16,6 +26,12 @@ ViroMaterials.createMaterials({
   tfGlass: { diffuseColor: '#5e8995' },
   tfLight: { diffuseColor: '#e4c782', lightingModel: 'Constant' },
   tfSignal: { diffuseColor: '#8be0c4', lightingModel: 'Constant' },
+  tfHazard: { diffuseColor: '#c96a52', lightingModel: 'Constant' },
+  tfOvergrown: { diffuseColor: '#3d5a45' },
+});
+ViroAnimations.registerAnimations({
+  tfGearSpin: { properties: { rotateZ: '+=360' }, duration: 5000 },
+  tfBeaconPulse: { properties: { scaleX: '+=0.5', scaleY: '+=0.5', scaleZ: '+=0.5' }, duration: 1200 },
 });
 
 function EraObservatory({ layer, interaction }: { layer: EraVisual; interaction: Interaction | null }) {
@@ -45,10 +61,11 @@ function EraObservatory({ layer, interaction }: { layer: EraVisual; interaction:
         <ViroSphere position={[0, 0, -0.25]} radius={0.045} widthSegmentCount={12} heightSegmentCount={8} scale={[1, 1, 0.15]} materials={focused('lens') ? 'tfSignal' : 'tfGlass'} onClick={() => select('lens')} visible={state.lens === 'optic'} />
       </ViroNode>
       <ViroSphere position={[0.13, 0.04, 0.39]} radius={0.045} widthSegmentCount={12} heightSegmentCount={8} scale={[1, 0.2, 1]} materials={focused('lens') ? 'tfSignal' : 'tfGlass'} onClick={() => select('lens')} visible={state.lens === 'home'} viroTag={`${layer.era}-lens`} />
-      <ViroBox position={installedCell} width={0.055} height={0.11} length={0.055} materials={focused('cell') ? 'tfSignal' : 'tfBrass'} onClick={() => select('cell')} viroTag={`${layer.era}-cell`} />
-      <ViroBox position={installedFuse} width={0.025} height={0.08} length={0.025} materials={focused('fuse') ? 'tfSignal' : 'tfLight'} onClick={() => select('fuse')} viroTag={`${layer.era}-fuse`} />
+      <ViroBox position={installedCell} width={0.055} height={0.11} length={0.055} materials={focused('cell') ? 'tfSignal' : state.cell === 'spare' ? 'tfHazard' : 'tfBrass'} onClick={() => select('cell')} viroTag={`${layer.era}-cell`} />
+      <ViroBox position={installedFuse} width={0.025} height={0.08} length={0.025} materials={focused('fuse') ? 'tfSignal' : state.fuse === 'bypass' ? 'tfHazard' : 'tfLight'} onClick={() => select('fuse')} viroTag={`${layer.era}-fuse`} />
       <ViroBox position={[-0.22, 0.025, 0.26]} width={0.085} height={0.022} length={0.09} materials="tfDark" />
-      <ViroNode position={state.gear === 'drive' ? [0.24, 0.17, 0.07] : [0.26, 0.05, 0.36]} onClick={() => select('gear')} viroTag={`${layer.era}-gear`}>
+      <ViroNode position={state.gear === 'drive' ? [0.24, 0.17, 0.07] : [0.26, 0.05, 0.36]} onClick={() => select('gear')} viroTag={`${layer.era}-gear`}
+        animation={{ name: 'tfGearSpin', run: layer.era === 'present' && layer.powered && state.gear === 'drive', loop: true }}>
         <ViroSphere radius={0.065} widthSegmentCount={12} heightSegmentCount={8} scale={[1, 1, 0.2]} materials={focused('gear') ? 'tfSignal' : 'tfBrass'} />
         {Array.from({ length: 8 }, (_, index) => {
           const angle = index * Math.PI / 4;
@@ -58,9 +75,17 @@ function EraObservatory({ layer, interaction }: { layer: EraVisual; interaction:
       <ViroBox position={[0.22, 0.055, 0.28]} width={0.13} height={0.1} length={0.12} materials={body} />
       <ViroSphere position={state.crystal === 'receiver' ? [0.22, 0.12, 0.28] : [0.27, 0.04, 0.39]} radius={0.036} widthSegmentCount={6} heightSegmentCount={6} materials={focused('crystal') || layer.signalRecovered ? 'tfSignal' : 'tfGlass'} onClick={() => select('crystal')} viroTag={`${layer.era}-crystal`} />
       <ViroBox position={[0.22, 0.068, 0.35]} width={0.085} scale={[state.frequency === 'target' ? 1 : 0.33, 1, 1]} height={0.015} length={0.015} materials={focused('frequency') || layer.signalRecovered ? 'tfSignal' : 'tfDark'} onClick={() => select('frequency')} />
-      <ViroBox position={[-0.27, 0.22, -0.25]} width={0.027} height={0.44} length={0.027} materials="tfBrass" />
-      <ViroSphere position={[-0.27, 0.45, -0.25]} radius={0.045} widthSegmentCount={10} heightSegmentCount={8} materials={layer.era === 'future' && layer.powered ? 'tfLight' : 'tfDark'} />
+      <ViroBox position={[-0.27, 0.22, -0.25]} width={0.027} height={0.44} length={0.027} materials={layer.era === 'future' && !layer.powered ? 'tfOvergrown' : 'tfBrass'} />
+      <ViroSphere position={[-0.27, 0.45, -0.25]} radius={0.045} widthSegmentCount={10} heightSegmentCount={8} materials={layer.era === 'future' && layer.powered ? 'tfLight' : 'tfDark'}
+        animation={{ name: 'tfBeaconPulse', run: layer.era === 'future' && layer.powered, loop: true }} />
       <ViroSphere position={[0, 0.66, -0.28]} radius={0.023} widthSegmentCount={8} heightSegmentCount={6} materials="tfSignal" visible={layer.era === 'future' && layer.signalRecovered} />
+      {layer.era === 'future' && layer.signalRecovered && (
+        <ViroBox position={[0.06, 0.62, -0.14]} rotation={[38, 0, 0]} width={0.012} height={0.012} length={0.6} materials="tfSignal" />
+      )}
+      {layer.era === 'past' && interaction?.selected && choiceTargets[interaction.selected].map((target, index) => target && (
+        <ViroSphere key={`${interaction.selected}-${index}`} position={target} radius={0.035} widthSegmentCount={10} heightSegmentCount={8}
+          materials="tfSignal" onClick={() => interaction.onPlace(index)} viroTag={`target-${interaction.selected}-${index}`} />
+      ))}
       <SceneLabel text={layer.label} position={[0, 0.89, 0.03]} width={0.78} height={0.12} color="#d7b47b" />
       <SceneLabel text={layer.year} position={[0, 0.76, 0.03]} width={0.65} height={0.18} color="#eee9df" size={0.8} />
       <SceneLabel text={layer.status} position={[0, -0.18, 0.56]} width={0.75} height={0.14} color="#eee9df" size={0.35} />

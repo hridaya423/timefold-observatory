@@ -20,7 +20,7 @@ export default function PuzzleControls({ session, busy, dispatch }: { session: P
     {([1, 2, 3] satisfies Chapter[]).map((chapter, index) => <PuzzleButton key={chapter} label={`Chapter ${chapter}`} position={[(index - 1) * 0.58, -0.65, 0.58]} selected={chapter === session.chapter} disabled={busy || chapter > session.game.unlocked} onPress={() => dispatch({ kind: 'chapter', chapter })} />)}
     {!confirming && <ViroNode>
       {chapterFields[session.chapter].map((field, index, fields) => <PuzzleButton key={field} label={objectNames[field]} position={[(index - (fields.length - 1) / 2) * 0.58, -0.82, 0.58]} selected={selected === field} disabled={busy} onPress={() => dispatch({ kind: 'select', field })} />)}
-      <SceneLabel text={selected ? `Selected: ${objectNames[selected]}. Choose a destination.` : 'Select a past object, then choose its destination.'} position={[0, -0.98, 0.58]} width={2.4} height={0.12} color="#d7b47b" size={0.3} />
+      <SceneLabel text={selected ? `${objectNames[selected]} selected — tap a glowing marker where it belongs.` : 'Tap an object in the past era, then tap a glowing marker where it belongs.'} position={[0, -0.98, 0.58]} width={2.4} height={0.12} color="#d7b47b" size={0.3} />
       {[0, 1, 2].map(index => {
         const choice = selected ? placementChoices(selected)[index] : null;
         return <PuzzleButton key={index} label={choice?.label ?? `Destination ${index + 1}`} position={[(index - 1) * 0.58, -1.15, 0.58]} disabled={busy || !choice} dispatchWhenDisabled selected={choice ? session.game.state[choice.action.field] === choice.action.value : false} onPress={() => dispatch({ kind: 'placeChoice', index })} />;

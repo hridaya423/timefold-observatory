@@ -62,7 +62,7 @@ export default function TimeFoldContent({ onExit }: { onExit: () => void }) {
   const trace = session.trace;
   const world = deriveWorld(session.game.state);
   return <ViroNode>
-    <ObservatoryVisuals layers={buildEraVisuals(session.game.state)} interaction={{ selected: session.selected, highlights, onSelect: field => dispatch({ kind: 'select', field }) }} />
+    <ObservatoryVisuals layers={buildEraVisuals(session.game.state)} interaction={{ selected: session.selected, highlights, onSelect: field => dispatch({ kind: 'select', field }), onPlace: index => dispatch({ kind: 'placeChoice', index }) }} />
     <SceneLabel text="TIMEFOLD / THE LAST OBSERVATORY" position={[0, 1.32, 0]} width={2.4} height={0.13} color="#eee9df" size={0.5} />
     <SceneLabel text={chapterContent[session.chapter].objective} position={[0, 1.16, 0]} width={2.4} height={0.17} color="#b6c1b8" size={0.3} />
     <ViroNode position={[0, -0.06, 0.15]} scale={[0.7, 0.7, 0.7]}>

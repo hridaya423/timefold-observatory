@@ -22,9 +22,9 @@ const choices: Readonly<Record<PuzzleField, readonly PlacementChoice[]>> = {
   fuse: [{ label: 'Bench', action: { kind: 'change', field: 'fuse', value: 'home' } }, { label: 'Protection socket', action: { kind: 'change', field: 'fuse', value: 'protected' } }, { label: 'Bypass socket', action: { kind: 'change', field: 'fuse', value: 'bypass' } }],
   gear: [{ label: 'Bench', action: { kind: 'change', field: 'gear', value: 'home' } }, { label: 'Drive socket', action: { kind: 'change', field: 'gear', value: 'drive' } }],
   lens: [{ label: 'Bench', action: { kind: 'change', field: 'lens', value: 'home' } }, { label: 'Optical mount', action: { kind: 'change', field: 'lens', value: 'optic' } }],
-  alignment: [{ label: 'Left', action: { kind: 'change', field: 'alignment', value: 'left' } }, { label: 'Target mark', action: { kind: 'change', field: 'alignment', value: 'target' } }, { label: 'Right', action: { kind: 'change', field: 'alignment', value: 'right' } }],
+  alignment: [{ label: 'Left', action: { kind: 'change', field: 'alignment', value: 'left' } }, { label: 'Marked centre', action: { kind: 'change', field: 'alignment', value: 'target' } }, { label: 'Right', action: { kind: 'change', field: 'alignment', value: 'right' } }],
   crystal: [{ label: 'Bench', action: { kind: 'change', field: 'crystal', value: 'home' } }, { label: 'Receiver mount', action: { kind: 'change', field: 'crystal', value: 'receiver' } }],
-  frequency: [{ label: 'Low', action: { kind: 'change', field: 'frequency', value: 'low' } }, { label: 'Target mark', action: { kind: 'change', field: 'frequency', value: 'target' } }, { label: 'High', action: { kind: 'change', field: 'frequency', value: 'high' } }],
+  frequency: [{ label: 'Low band', action: { kind: 'change', field: 'frequency', value: 'low' } }, { label: 'Marked band', action: { kind: 'change', field: 'frequency', value: 'target' } }, { label: 'High band', action: { kind: 'change', field: 'frequency', value: 'high' } }],
 };
 export const placementChoices = (field: PuzzleField): readonly PlacementChoice[] => choices[field];
 export function newPuzzleSession(game: Game = newGame()): PuzzleSession {
@@ -39,10 +39,11 @@ function traceChange(before: Game, after: Game): CausalTrace {
   const highlights = fields.filter(field => before.state[field] !== after.state[field]);
   const past = highlights.map(field => `${objectNames[field]}: ${placementChoices(field).find(choice => choice.action.value === after.state[field])?.label ?? after.state[field]}`).join('; ');
   const world = deriveWorld(after.state);
+  const bypassed = after.state.cell === 'main' && after.state.fuse === 'bypass';
   return {
     past,
-    present: world.aimed ? 'The telescope is aligned with the signal star.' : world.powered ? 'The motor is energized; the optical chain is incomplete.' : 'The motor is silent; its power chain is incomplete.',
-    future: world.signalRecovered ? 'The lost message is recovered.' : world.powered ? 'The beacon is illuminated; the lost message is not recovered.' : 'The beacon is dark; the lost message is not recovered.',
+    present: world.aimed ? 'The telescope is aligned with the signal star.' : world.powered ? 'The motor is energized; the optical chain is incomplete.' : bypassed ? 'The bypassed protection spits sparks and dies; the motor is silent.' : 'The motor is silent; its power chain is incomplete.',
+    future: world.signalRecovered ? 'The lost message is recovered.' : bypassed ? 'The burnt circuit reached no future; the lost message is not recovered.' : world.powered ? 'The beacon is illuminated; the lost message is not recovered.' : 'The beacon is dark; the lost message is not recovered.',
     highlights,
   };
 }

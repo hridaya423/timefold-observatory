@@ -11,8 +11,8 @@ export default function TimeFoldPhoneScene() {
     onAnchorRemoved={anchor => { if (anchor) selector.current?.handleAnchorRemoved(anchor); }}>
     <ViroAmbientLight color="#ffffff" intensity={650} />
     {!selected && <ViroText text="Scan a tabletop, then tap a highlighted plane to place the observatory." position={[0, 0, -1.5]} width={1.4} height={0.25} style={{ fontSize: 20, color: '#ffffff', textAlign: 'center' }} />}
-    <ViroARPlaneSelector ref={selector} minWidth={0.6} minHeight={0.4} onPlaneSelected={() => setSelected(true)}>
-      <ViroNode scale={[0.35, 0.35, 0.35]}><TimeFoldContent onExit={() => router.replace('/')} /></ViroNode>
+    <ViroARPlaneSelector ref={selector} minWidth={1.2} minHeight={0.8} onPlaneSelected={() => setSelected(true)}>
+      <ViroNode scale={[0.55, 0.55, 0.55]}><TimeFoldContent onExit={() => router.replace('/')} /></ViroNode>
     </ViroARPlaneSelector>
   </ViroARScene>;
 }

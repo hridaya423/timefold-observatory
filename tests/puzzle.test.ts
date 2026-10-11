@@ -66,9 +66,9 @@ test('reset requires matching named confirmation, cancellation commits nothing, 
 
 test('all chapters complete through explicit named choices, and removing a prerequisite changes the world without relocking chapters', () => {
   let session = reducePuzzle(powered(), { kind: 'chapter', chapter: 2 });
-  session = place(place(place(session, 'gear', 'Drive socket'), 'lens', 'Optical mount'), 'alignment', 'Target mark');
+  session = place(place(place(session, 'gear', 'Drive socket'), 'lens', 'Optical mount'), 'alignment', 'Marked centre');
   session = reducePuzzle(session, { kind: 'chapter', chapter: 3 });
-  session = place(place(session, 'crystal', 'Receiver mount'), 'frequency', 'Target mark');
+  session = place(place(session, 'crystal', 'Receiver mount'), 'frequency', 'Marked band');
   assert.equal(chapterComplete(session.game, 3), true);
   session = reducePuzzle(session, { kind: 'chapter', chapter: 1 });
   session = place(session, 'cell', 'Bench');
