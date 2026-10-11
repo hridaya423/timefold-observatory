@@ -1,0 +1,4 @@
+project_id = "timefold-local"
+
+[functions.keeper]
+verify_jwt = true

@@ -1,0 +1,8 @@
+{
+  "mcpServers": {
+    "viroreact": {
+      "url": "https://mcp.reactvision.xyz/viro",
+      "transport": "http"
+    }
+  }
+}
